@@ -1,0 +1,48 @@
+services:
+  mytb:
+    restart: always
+    image: "thingsboard/tb-postgres:latest"
+    ports:
+      - "8080:9090"
+      - "1883:1883"
+      - "7070:7070"
+      - "5683-5688:5683-5688/udp"
+    environment:
+      TB_QUEUE_TYPE: ${TB_QUEUE_TYPE}
+      TB_QUEUE_RABBIT_MQ_USERNAME: ${TB_QUEUE_RABBIT_MQ_USERNAME}
+      TB_QUEUE_RABBIT_MQ_PASSWORD: ${TB_QUEUE_RABBIT_MQ_PASSWORD}
+      TB_QUEUE_RABBIT_MQ_HOST: ${TB_QUEUE_RABBIT_MQ_HOST}
+      TB_QUEUE_RABBIT_MQ_PORT: ${TB_QUEUE_RABBIT_MQ_PORT}
+    volumes:
+      - ~/.mytb-data:/data
+      - ~/.mytb-logs:/var/log/thingsboard
+    depends_on:
+      - rabbitmq
+      - minio
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    ports:
+      - "5672:5672"  # RabbitMQ message broker port
+      - "15672:15672"  # RabbitMQ management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  minio:
+    image: "minio/minio"
+    ports:
+      - "9000:9000"  # MinIO port for accessing the storage
+      - "9001:9001"  # MinIO console UI port
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"  # Sets the console UI to port 9001
+
+volumes:
+  rabbitmq_data:
+  minio_data:
