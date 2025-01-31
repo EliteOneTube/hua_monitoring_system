@@ -43,9 +43,9 @@ To run the script automatically at regular intervals:
    ```bash
    crontab -e
    ```
-2. Add the following line to execute the script every 10 minutes:
+2. Add the following line to execute the script every 1 minutes:
    ```bash
-   */10 * * * * /path/to/gpu_power_monitor.sh
+   * * * * * /path/to/gpu_power_monitor.sh
    ```
 
 ## Logs & Debugging
