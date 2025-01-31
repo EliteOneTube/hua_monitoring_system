@@ -5,7 +5,7 @@ THINGSBOARD_HOST="your-thingsboard-host"
 ACCESS_TOKEN="your-device-access-token"
 
 # Log file for debugging
-LOG_FILE="/var/log/gpu_power_monitor.log"
+LOG_FILE="/tmp/gpu_power_monitor.log"
 
 # Check if nvidia-smi is installed
 if ! command -v nvidia-smi &> /dev/null; then
