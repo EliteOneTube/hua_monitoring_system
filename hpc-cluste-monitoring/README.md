@@ -19,7 +19,7 @@ This script monitors the **total power consumption of all NVIDIA GPUs** in a clu
 ## Installation
 1. **Download the script:**
    ```bash
-   wget -O gpu_power_monitor.sh https://github.com/EliteOneTube/hua_monitoring_system/blob/main/hpc-cluste-monitoring/gpu_power_monitor.sh
+   wget -O gpu_power_monitor.sh https://raw.githubusercontent.com/EliteOneTube/hua_monitoring_system/refs/heads/main/hpc-cluste-monitoring/gpu_power_monitor.sh
    ```
 
 2. **Make the script executable:**
