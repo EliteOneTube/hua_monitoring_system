@@ -38,7 +38,7 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     payload+=",\"gpu_${gpu}_memory_clock_mhz\": $memory_clock_mhz"
     
     # Get process-level memory usage
-    processes=$(nvidia-smi --query-compute-apps=pid,memory.used --format=csv,noheader,nounits -i $gpu)
+    processes=$(nvidia-smi --query-compute-apps=pid,memory_used --format=csv,noheader,nounits -i $gpu)
     process_json="\"gpu_${gpu}_processes\": ["
     
     # Check if processes are returned
