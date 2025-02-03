@@ -42,12 +42,18 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     processes=$(nvidia-smi --query-compute-apps=pid,memory.used --format=csv,noheader,nounits -i $gpu)
     process_json="\"processes\": ["
     
-    while IFS=',' read -r pid mem_usage; do
-        process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage},"
-    done <<< "$processes"
+    # Check if processes are returned
+    if [ -n "$processes" ]; then
+        while IFS=',' read -r pid mem_usage; do
+            # Ensure mem_usage has a value, else set to 0
+            mem_usage=${mem_usage:-0}
+            process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage},"
+        done <<< "$processes"
+        
+        # Remove trailing comma if any process info was added
+        process_json=${process_json%,}
+    fi
     
-    # Remove trailing comma if any process info was added
-    process_json=${process_json%,}
     process_json+="]"
     
     # Append process data to GPU JSON
