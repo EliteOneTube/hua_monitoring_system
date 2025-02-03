@@ -17,7 +17,7 @@ fi
 total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | awk '{sum += $1} END {print sum}')
 
 # Prepare JSON payload with GPU statistics
-payload="{\"total_power_usage_watts\": $total_power, \"gpus\": ["
+payload="{\"total_power_usage_watts\": $total_power"
 
 # Loop through each GPU
 num_gpus=$(nvidia-smi --list-gpus | wc -l)
@@ -30,7 +30,7 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     memory_clock_mhz=$(nvidia-smi --query-gpu=clocks.mem --format=csv,noheader,nounits -i $gpu)
     
     # Start GPU JSON object
-    gpu_json="{\"gpu_$gpu\": {"
+    gpu_json="\"gpu_$gpu\": {"
     gpu_json+="\"power_usage_watts\": $gpu_power,"
     gpu_json+="\"gpu_utilization\": $gpu_utilization,"
     gpu_json+="\"memory_utilization\": $memory_utilization,"
@@ -41,6 +41,7 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     # Get process-level memory usage
     processes=$(nvidia-smi --query-compute-apps=pid,memory.used --format=csv,noheader,nounits -i $gpu)
     process_json="\"processes\": ["
+    
     while IFS=',' read -r pid mem_usage; do
         process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage},"
     done <<< "$processes"
@@ -63,8 +64,8 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     fi
 done
 
-# Close the JSON array for GPUs
-payload+="]}"
+# Close the JSON payload
+payload+="}"
 
 # Send data to ThingsBoard using HTTP API (via curl)
 http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$THINGSBOARD_HOST/api/v1/$ACCESS_TOKEN/telemetry" \
