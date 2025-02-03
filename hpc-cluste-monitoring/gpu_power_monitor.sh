@@ -16,7 +16,7 @@ fi
 # Get total power consumption of all GPUs
 total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | awk '{sum += $1} END {print sum}')
 
-# Prepare JSON payload with GPU statistics
+# Prepare JSON payload with total power
 payload="{\"total_power_usage_watts\": $total_power"
 
 # Loop through each GPU
@@ -29,18 +29,17 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     gpu_clock_mhz=$(nvidia-smi --query-gpu=clocks.gr --format=csv,noheader,nounits -i $gpu)
     memory_clock_mhz=$(nvidia-smi --query-gpu=clocks.mem --format=csv,noheader,nounits -i $gpu)
     
-    # Start GPU JSON object
-    gpu_json="\"gpu_$gpu\": {"
-    gpu_json+="\"power_usage_watts\": $gpu_power,"
-    gpu_json+="\"gpu_utilization\": $gpu_utilization,"
-    gpu_json+="\"memory_utilization\": $memory_utilization,"
-    gpu_json+="\"temperature\": $temperature,"
-    gpu_json+="\"gpu_clock_mhz\": $gpu_clock_mhz,"
-    gpu_json+="\"memory_clock_mhz\": $memory_clock_mhz,"
+    # Append GPU data to payload
+    payload+=",\"gpu_${gpu}_power_usage\": $gpu_power"
+    payload+=",\"gpu_${gpu}_gpu_utilization\": $gpu_utilization"
+    payload+=",\"gpu_${gpu}_memory_utilization\": $memory_utilization"
+    payload+=",\"gpu_${gpu}_temperature\": $temperature"
+    payload+=",\"gpu_${gpu}_gpu_clock_mhz\": $gpu_clock_mhz"
+    payload+=",\"gpu_${gpu}_memory_clock_mhz\": $memory_clock_mhz"
     
     # Get process-level memory usage
     processes=$(nvidia-smi --query-compute-apps=pid,memory.used --format=csv,noheader,nounits -i $gpu)
-    process_json="\"processes\": ["
+    process_json="\"gpu_${gpu}_processes\": ["
     
     # Check if processes are returned
     if [ -n "$processes" ]; then
@@ -56,18 +55,8 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     
     process_json+="]"
     
-    # Append process data to GPU JSON
-    gpu_json+="$process_json"
-    
-    # Close GPU JSON object
-    gpu_json+="}"
-
-    # Append the GPU data to the main payload
-    if [ "$gpu" -lt "$((num_gpus - 1))" ]; then
-        payload+="$gpu_json,"
-    else
-        payload+="$gpu_json"
-    fi
+    # Append process data to GPU section
+    payload+=", $process_json"
 done
 
 # Close the JSON payload
