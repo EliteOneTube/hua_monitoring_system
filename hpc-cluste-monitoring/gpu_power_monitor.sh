@@ -38,15 +38,13 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     payload+=",\"gpu_${gpu}_memory_clock_mhz\": $memory_clock_mhz"
     
     # Get process-level memory usage using nvidia-smi pmon -c 1
-    processes=$(nvidia-smi pmon -c 1 | grep -E "^[0-9]+" | awk '{print $1 "," $6}')
+    processes=$(nvidia-smi pmon -c 1 | awk 'NR>2 {print $2 "," ($6 == "-" ? 0 : $6)}')
 
     process_json="\"gpu_${gpu}_processes\": ["
     
     # Check if processes are returned
     if [ -n "$processes" ]; then
         while IFS=',' read -r pid mem_usage; do
-            # Ensure mem_usage has a value, else set to 0
-            mem_usage=${mem_usage:-0}
             process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage},"
         done <<< "$processes"
         
