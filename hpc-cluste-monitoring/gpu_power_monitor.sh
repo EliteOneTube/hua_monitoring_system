@@ -45,7 +45,7 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     # Check if processes are returned
     if [ -n "$processes" ]; then
         while IFS=',' read -r pid mem_usage; do
-            process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage},"
+            process_json+="{\"pid\": \"$pid\", \"memory_usage_per\": $mem_usage},"
         done <<< "$processes"
         
         # Remove trailing comma if any process info was added
