@@ -19,6 +19,15 @@ total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | 
 # Prepare JSON payload with total power
 payload="{\"total_power_usage_watts\": $total_power"
 
+# Get process-level usage using nvidia-smi pmon -c 1
+processes=$(nvidia-smi pmon -c 1 | awk 'NR>2 {print $2 "," ($6 == "-" ? 0 : $6) "," ($4 == "-" ? 0 : $4)}')
+
+# Count total processes
+total_processes_count=$(echo "$processes" | wc -l)
+
+# Add total process count to JSON
+payload+=",\"total_processes_count\": $total_processes_count"
+
 # Loop through each GPU
 num_gpus=$(nvidia-smi --list-gpus | wc -l)
 for ((gpu=0; gpu<num_gpus; gpu++)); do
@@ -36,22 +45,30 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     payload+=",\"gpu_${gpu}_temperature\": $temperature"
     payload+=",\"gpu_${gpu}_gpu_clock_mhz\": $gpu_clock_mhz"
     payload+=",\"gpu_${gpu}_memory_clock_mhz\": $memory_clock_mhz"
-    
-    # Get process-level memory usage using nvidia-smi pmon -c 1
-    processes=$(nvidia-smi pmon -c 1 | awk 'NR>2 {print $2 "," ($6 == "-" ? 0 : $6)}')
 
+    # Process JSON for this GPU
     process_json="\"gpu_${gpu}_processes\": ["
-    
-    # Check if processes are returned
+
+    # Calculate total SM utilization to distribute power
+    total_sm_util=$(echo "$processes" | awk -F',' '{sum += $3} END {print sum}')
+
+    # Check if processes exist
     if [ -n "$processes" ]; then
-        while IFS=',' read -r pid mem_usage; do
-            process_json+="{\"pid\": \"$pid\", \"memory_usage_per\": $mem_usage},"
+        while IFS=',' read -r pid mem_usage sm_util; do
+            # If SM utilization is 0 or total_sm_util is 0, allocate equal power
+            if [ "$total_sm_util" -gt 0 ] && [ "$sm_util" -gt 0 ]; then
+                power_usage=$(awk "BEGIN {printf \"%.2f\", ($sm_util / $total_sm_util) * $gpu_power}")
+            else
+                power_usage=0
+            fi
+            
+            process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage, \"sm_utilization\": $sm_util, \"estimated_power_watts\": $power_usage},"
         done <<< "$processes"
-        
+
         # Remove trailing comma if any process info was added
         process_json=${process_json%,}
     fi
-    
+
     process_json+="]"
     
     # Append process data to GPU section
