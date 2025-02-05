@@ -20,20 +20,20 @@ total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | 
 payload="{\"total_power_usage_watts\": $total_power, \"gpus\":["
 
 # Loop through each GPU
-num_gpus=$(nvidia-smi --list-gpus | wc -l)
+num_gpus=$(nvidia-smi --list-gpus | grep -v "MIG" | wc -l)
 for ((gpu=0; gpu<num_gpus; gpu++)); do
     gpu_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits -i $gpu)
     gpu_utilization=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits -i $gpu)
-    memory_utilization=$(nvidia-smi --query-gpu=utilization.memory --format=csv,noheader,nounits -i $gpu)
+    
+    # Ignore "N/A" for memory_utilization and rely on total memory usage instead
+    total_mem_usage=$(nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits -i $gpu | awk -F',' '{sum += $2} END {print sum+0}')  # Ensure sum is numeric
+
     temperature=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits -i $gpu)
     gpu_clock_mhz=$(nvidia-smi --query-gpu=clocks.gr --format=csv,noheader,nounits -i $gpu)
     memory_clock_mhz=$(nvidia-smi --query-gpu=clocks.mem --format=csv,noheader,nounits -i $gpu)
 
     # Get process information for this GPU
     processes=$(nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits -i $gpu)
-
-    # Calculate total memory usage by all processes
-    total_mem_usage=$(echo "$processes" | awk -F',' '{sum += $2} END {print sum+0}')  # Ensure sum is numeric
 
     # Process JSON array
     process_json="\"processes\":["
@@ -59,7 +59,7 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     process_json+="]"
 
     # Append GPU data
-    payload+="{\"gpu_id\": $gpu, \"power_usage_watts\": $gpu_power, \"gpu_utilization\": $gpu_utilization, \"memory_utilization\": $memory_utilization, \"temperature\": $temperature, \"gpu_clock_mhz\": $gpu_clock_mhz, \"memory_clock_mhz\": $memory_clock_mhz, $process_json},"
+    payload+="{\"gpu_id\": $gpu, \"power_usage_watts\": $gpu_power, \"gpu_utilization\": $gpu_utilization, \"memory_utilization\": $total_mem_usage, \"temperature\": $temperature, \"gpu_clock_mhz\": $gpu_clock_mhz, \"memory_clock_mhz\": $memory_clock_mhz, $process_json},"
 done
 
 # Remove last comma from GPU array and close JSON
