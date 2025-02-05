@@ -2,7 +2,7 @@
 
 # ThingsBoard configuration
 THINGSBOARD_HOST="your-thingsboard-host"
-ACCESS_TOKENS=("your-device-access-token-1" "your-device-access-token-2" "your-device-access-token-3" "your-device-access-token-4")  # Array of access tokens
+ACCESS_TOKENS=("your-device-access-token-1" "your-device-access-token-2" "your-device-access-token-3" "your-device-access-token-4" "your-cluster-access-token")  # Array of access tokens
 
 # Log file for debugging
 LOG_FILE="/tmp/gpu_power_monitor.log"
@@ -13,8 +13,10 @@ if ! command -v nvidia-smi &> /dev/null; then
     exit 1
 fi
 
-# Get total power consumption of all GPUs
-total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | awk '{sum += $1} END {print sum}')
+# Initialize variables for cluster-wide data
+total_cluster_power=0
+total_cluster_mem_usage=0
+total_processes_json="\"processes\":["
 
 # Loop through each GPU
 num_gpus=$(nvidia-smi --list-gpus | grep -v "MIG" | wc -l)
@@ -31,7 +33,7 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     # Get process information for this GPU
     processes=$(nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits -i $gpu)
 
-    # Process JSON array
+    # Process JSON array for the current GPU
     process_json="\"processes\":["
 
     # Parse processes and estimate power usage based on memory usage
@@ -75,4 +77,29 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     else
         echo "$(date) - ERROR: Failed to send data for GPU $gpu (HTTP $http_code)" >> "$LOG_FILE"
     fi
+
+    # Aggregate data for the cluster (fifth device)
+    total_cluster_power=$(echo "$total_cluster_power + $gpu_power" | bc)
+    total_cluster_mem_usage=$(echo "$total_cluster_mem_usage + $total_mem_usage" | bc)
+    total_processes_json+="$process_json,"
 done
+
+# Remove the last comma from the processes array
+total_processes_json=${total_processes_json%,}
+total_processes_json+="]"
+
+# Prepare the total cluster data JSON
+cluster_json="{\"total_power_usage_watts\": $total_cluster_power, \"memory_usage_mb\": $total_cluster_mem_usage, $total_processes_json}"
+
+# Send total cluster data to the fifth device (cluster device)
+access_token=${ACCESS_TOKENS[4]}  # Fifth device access token
+http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$THINGSBOARD_HOST/api/v1/$access_token/telemetry" \
+    -H "Content-Type: application/json" \
+    -d "$cluster_json")
+
+# Log response from ThingsBoard for the cluster data
+if [ "$http_code" -eq 200 ]; then
+    echo "$(date) - Data sent successfully for the cluster: $cluster_json" >> "$LOG_FILE"
+else
+    echo "$(date) - ERROR: Failed to send data for the cluster (HTTP $http_code)" >> "$LOG_FILE"
+fi
