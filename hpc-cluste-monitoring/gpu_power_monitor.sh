@@ -2,7 +2,7 @@
 
 # ThingsBoard configuration
 THINGSBOARD_HOST="your-thingsboard-host"
-ACCESS_TOKEN="your-device-access-token"
+ACCESS_TOKENS=("your-device-access-token-1" "your-device-access-token-2" "your-device-access-token-3" "your-device-access-token-4")  # Array of access tokens
 
 # Log file for debugging
 LOG_FILE="/tmp/gpu_power_monitor.log"
@@ -15,9 +15,6 @@ fi
 
 # Get total power consumption of all GPUs
 total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | awk '{sum += $1} END {print sum}')
-
-# Initialize JSON payload
-payload="{\"total_power_usage_watts\": $total_power, \"gpus\":["
 
 # Loop through each GPU
 num_gpus=$(nvidia-smi --list-gpus | grep -v "MIG" | wc -l)
@@ -61,22 +58,21 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     process_json=${process_json%,}
     process_json+="]"
 
-    # Append GPU data
-    payload+="{\"gpu_id\": $gpu, \"power_usage_watts\": $gpu_power, \"gpu_utilization\": $gpu_utilization, \"memory_utilization\": $total_mem_usage, \"temperature\": $temperature, \"gpu_clock_mhz\": $gpu_clock_mhz, \"memory_clock_mhz\": $memory_clock_mhz, $process_json},"
+    # Prepare GPU data JSON without gpu_id and with memory_usage_mb instead
+    gpu_json="{\"power_usage_watts\": $gpu_power, \"memory_usage_mb\": $total_mem_usage, \"temperature\": $temperature, \"gpu_clock_mhz\": $gpu_clock_mhz, \"memory_clock_mhz\": $memory_clock_mhz, $process_json}"
+
+    # Select the corresponding access token for this GPU
+    access_token=${ACCESS_TOKENS[$gpu]}
+
+    # Send data to ThingsBoard using HTTP API (via curl)
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$THINGSBOARD_HOST/api/v1/$access_token/telemetry" \
+        -H "Content-Type: application/json" \
+        -d "$gpu_json")
+
+    # Log response from ThingsBoard
+    if [ "$http_code" -eq 200 ]; then
+        echo "$(date) - Data sent successfully for GPU $gpu: $gpu_json" >> "$LOG_FILE"
+    else
+        echo "$(date) - ERROR: Failed to send data for GPU $gpu (HTTP $http_code)" >> "$LOG_FILE"
+    fi
 done
-
-# Remove last comma from GPU array and close JSON
-payload=${payload%,}
-payload+="]}"
-
-# Send data to ThingsBoard using HTTP API (via curl)
-http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$THINGSBOARD_HOST/api/v1/$ACCESS_TOKEN/telemetry" \
-    -H "Content-Type: application/json" \
-    -d "$payload")
-
-# Log response from ThingsBoard
-if [ "$http_code" -eq 200 ]; then
-    echo "$(date) - Data sent successfully: $payload" >> "$LOG_FILE"
-else
-    echo "$(date) - ERROR: Failed to send data (HTTP $http_code)" >> "$LOG_FILE"
-fi
