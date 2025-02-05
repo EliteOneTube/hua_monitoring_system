@@ -23,7 +23,6 @@ payload="{\"total_power_usage_watts\": $total_power, \"gpus\":["
 num_gpus=$(nvidia-smi --list-gpus | grep -v "MIG" | wc -l)
 for ((gpu=0; gpu<num_gpus; gpu++)); do
     gpu_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits -i $gpu)
-    gpu_utilization=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits -i $gpu)
     
     # Ignore "N/A" for memory_utilization and rely on total memory usage instead
     total_mem_usage=$(nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits -i $gpu | awk -F',' '{sum += $2} END {print sum+0}')  # Ensure sum is numeric
@@ -44,6 +43,9 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
             continue  # Skip empty lines
         fi
 
+        # Retrieve the user associated with the process
+        process_user=$(ps -p $pid -o user=)
+
         # Compute estimated power usage per process
         if [ "$total_mem_usage" -gt 0 ] && [ "$mem_usage" -gt 0 ]; then
             power_usage=$(awk "BEGIN {printf \"%.2f\", ($mem_usage / $total_mem_usage) * $gpu_power}")
@@ -51,7 +53,8 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
             power_usage=0
         fi
 
-        process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage, \"estimated_power_watts\": $power_usage},"
+        # Add user info to process JSON
+        process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage, \"estimated_power_watts\": $power_usage, \"user\": \"$process_user\"},"
     done <<< "$processes"
 
     # Remove trailing comma if processes exist
