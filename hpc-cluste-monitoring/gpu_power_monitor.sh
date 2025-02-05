@@ -16,7 +16,7 @@ fi
 # Initialize variables for cluster-wide data
 total_cluster_power=0
 total_cluster_mem_usage=0
-total_processes_json="\"processes\":["
+total_processes_count=0
 
 # Loop through each GPU
 num_gpus=$(nvidia-smi --list-gpus | grep -v "MIG" | wc -l)
@@ -30,38 +30,11 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     gpu_clock_mhz=$(nvidia-smi --query-gpu=clocks.gr --format=csv,noheader,nounits -i $gpu)
     memory_clock_mhz=$(nvidia-smi --query-gpu=clocks.mem --format=csv,noheader,nounits -i $gpu)
 
-    # Get process information for this GPU
-    processes=$(nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits -i $gpu)
+    # Get the number of processes for this GPU
+    processes_count=$(nvidia-smi --query-compute-apps=pid --format=csv,noheader,nounits -i $gpu | wc -l)
 
-    # Process JSON array for the current GPU
-    process_json="\"processes\":["
-
-    # Parse processes and estimate power usage based on memory usage
-    while IFS=',' read -r pid mem_usage; do
-        if [[ -z "$pid" || -z "$mem_usage" ]]; then
-            continue  # Skip empty lines
-        fi
-
-        # Retrieve the user associated with the process
-        process_user=$(ps -p $pid -o user=)
-
-        # Compute estimated power usage per process
-        if [ "$total_mem_usage" -gt 0 ] && [ "$mem_usage" -gt 0 ]; then
-            power_usage=$(awk "BEGIN {printf \"%.2f\", ($mem_usage / $total_mem_usage) * $gpu_power}")
-        else
-            power_usage=0
-        fi
-
-        # Add user info to process JSON
-        process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage, \"estimated_power_watts\": $power_usage, \"user\": \"$process_user\"},"
-    done <<< "$processes"
-
-    # Remove trailing comma if processes exist
-    process_json=${process_json%,}
-    process_json+="]"
-
-    # Prepare GPU data JSON without gpu_id and with memory_usage_mb instead
-    gpu_json="{\"power_usage_watts\": $gpu_power, \"memory_usage_mb\": $total_mem_usage, \"temperature\": $temperature, \"gpu_clock_mhz\": $gpu_clock_mhz, \"memory_clock_mhz\": $memory_clock_mhz, $process_json}"
+    # Prepare GPU data JSON without process details, only count
+    gpu_json="{\"power_usage_watts\": $gpu_power, \"memory_usage_mb\": $total_mem_usage, \"temperature\": $temperature, \"gpu_clock_mhz\": $gpu_clock_mhz, \"memory_clock_mhz\": $memory_clock_mhz, \"processes_count\": $processes_count}"
 
     # Select the corresponding access token for this GPU
     access_token=${ACCESS_TOKENS[$gpu]}
@@ -78,28 +51,26 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
         echo "$(date) - ERROR: Failed to send data for GPU $gpu (HTTP $http_code)" >> "$LOG_FILE"
     fi
 
-    # Aggregate data for the cluster (fifth device)
+    # Accumulate data for the cluster (total values)
     total_cluster_power=$(echo "$total_cluster_power + $gpu_power" | bc)
     total_cluster_mem_usage=$(echo "$total_cluster_mem_usage + $total_mem_usage" | bc)
-    total_processes_json+="$process_json,"
+    total_processes_count=$((total_processes_count + processes_count))
 done
 
-# Remove the last comma from the processes array
-total_processes_json=${total_processes_json%,}
-total_processes_json+="]"
+# Prepare total cluster data JSON
+cluster_json="{\"total_power_usage_watts\": $total_cluster_power, \"memory_usage_mb\": $total_cluster_mem_usage, \"processes_count\": $total_processes_count}"
 
-# Prepare the total cluster data JSON
-cluster_json="{\"total_power_usage_watts\": $total_cluster_power, \"memory_usage_mb\": $total_cluster_mem_usage, $total_processes_json}"
+# Send cluster-wide data to ThingsBoard using the fifth access token
+access_token=${ACCESS_TOKENS[4]}
 
-# Send total cluster data to the fifth device (cluster device)
-access_token=${ACCESS_TOKENS[4]}  # Fifth device access token
+# Send data to ThingsBoard
 http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$THINGSBOARD_HOST/api/v1/$access_token/telemetry" \
     -H "Content-Type: application/json" \
     -d "$cluster_json")
 
-# Log response from ThingsBoard for the cluster data
+# Log response from ThingsBoard
 if [ "$http_code" -eq 200 ]; then
-    echo "$(date) - Data sent successfully for the cluster: $cluster_json" >> "$LOG_FILE"
+    echo "$(date) - Cluster data sent successfully: $cluster_json" >> "$LOG_FILE"
 else
-    echo "$(date) - ERROR: Failed to send data for the cluster (HTTP $http_code)" >> "$LOG_FILE"
+    echo "$(date) - ERROR: Failed to send cluster data (HTTP $http_code)" >> "$LOG_FILE"
 fi
