@@ -16,17 +16,8 @@ fi
 # Get total power consumption of all GPUs
 total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | awk '{sum += $1} END {print sum}')
 
-# Prepare JSON payload with total power
+# Initialize JSON payload
 payload="{\"total_power_usage_watts\": $total_power"
-
-# Get process-level usage using nvidia-smi pmon -c 1
-processes=$(nvidia-smi pmon -c 1 | awk 'NR>2 {print $2 "," ($6 == "-" ? 0 : $6) "," ($4 == "-" ? 0 : $4)}')
-
-# Count total processes
-total_processes_count=$(echo "$processes" | wc -l)
-
-# Add total process count to JSON
-payload+=",\"total_processes_count\": $total_processes_count"
 
 # Loop through each GPU
 num_gpus=$(nvidia-smi --list-gpus | wc -l)
@@ -37,7 +28,7 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     temperature=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits -i $gpu)
     gpu_clock_mhz=$(nvidia-smi --query-gpu=clocks.gr --format=csv,noheader,nounits -i $gpu)
     memory_clock_mhz=$(nvidia-smi --query-gpu=clocks.mem --format=csv,noheader,nounits -i $gpu)
-    
+
     # Append GPU data to payload
     payload+=",\"gpu_${gpu}_power_usage\": $gpu_power"
     payload+=",\"gpu_${gpu}_gpu_utilization\": $gpu_utilization"
@@ -46,31 +37,31 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     payload+=",\"gpu_${gpu}_gpu_clock_mhz\": $gpu_clock_mhz"
     payload+=",\"gpu_${gpu}_memory_clock_mhz\": $memory_clock_mhz"
 
-    # Process JSON for this GPU
+    # Get process information for this GPU
+    processes=$(nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits -i $gpu)
+
+    # Calculate total memory usage by all processes
+    total_mem_usage=$(echo "$processes" | awk -F',' '{sum += $2} END {print sum}')
+
+    # Process JSON array
     process_json="\"gpu_${gpu}_processes\": ["
-
-    # Calculate total SM utilization to distribute power
-    total_sm_util=$(echo "$processes" | awk -F',' '{sum += $3} END {print sum}')
-
-    # Check if processes exist
-    if [ -n "$processes" ]; then
-        while IFS=',' read -r pid mem_usage sm_util; do
-            # If SM utilization is 0 or total_sm_util is 0, allocate equal power
-            if [ "$total_sm_util" -gt 0 ] && [ "$sm_util" -gt 0 ]; then
-                power_usage=$(awk "BEGIN {printf \"%.2f\", ($sm_util / $total_sm_util) * $gpu_power}")
-            else
-                power_usage=0
-            fi
-            
-            process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage, \"sm_utilization\": $sm_util, \"estimated_power_watts\": $power_usage},"
-        done <<< "$processes"
-
-        # Remove trailing comma if any process info was added
-        process_json=${process_json%,}
-    fi
-
-    process_json+="]"
     
+    # Parse processes and estimate power usage based on memory usage
+    while IFS=',' read -r pid mem_usage; do
+        # Compute estimated power usage per process
+        if [ "$total_mem_usage" -gt 0 ] && [ "$mem_usage" -gt 0 ]; then
+            power_usage=$(awk "BEGIN {printf \"%.2f\", ($mem_usage / $total_mem_usage) * $gpu_power}")
+        else
+            power_usage=0
+        fi
+
+        process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage, \"estimated_power_watts\": $power_usage},"
+    done <<< "$processes"
+
+    # Remove trailing comma if any process was added
+    process_json=${process_json%,}
+    process_json+="]"
+
     # Append process data to GPU section
     payload+=", $process_json"
 done
