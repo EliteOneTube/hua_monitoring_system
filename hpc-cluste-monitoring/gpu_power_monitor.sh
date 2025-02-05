@@ -9,7 +9,7 @@ LOG_FILE="/tmp/gpu_power_monitor.log"
 
 # Check if nvidia-smi is installed
 if ! command -v nvidia-smi &> /dev/null; then
-    echo "$(date) - ERROR: nvidia-smi not found. Ensure NVIDIA drivers are installed."
+    echo "$(date) - ERROR: nvidia-smi not found. Ensure NVIDIA drivers are installed." >> "$LOG_FILE"
     exit 1
 fi
 
@@ -17,7 +17,7 @@ fi
 total_power=$(nvidia-smi --query-gpu=power.draw --format=csv,noheader,nounits | awk '{sum += $1} END {print sum}')
 
 # Initialize JSON payload
-payload="{\"total_power_usage_watts\": $total_power"
+payload="{\"total_power_usage_watts\": $total_power, \"gpus\":["
 
 # Loop through each GPU
 num_gpus=$(nvidia-smi --list-gpus | wc -l)
@@ -29,25 +29,21 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
     gpu_clock_mhz=$(nvidia-smi --query-gpu=clocks.gr --format=csv,noheader,nounits -i $gpu)
     memory_clock_mhz=$(nvidia-smi --query-gpu=clocks.mem --format=csv,noheader,nounits -i $gpu)
 
-    # Append GPU data to payload
-    payload+=",\"gpu_${gpu}_power_usage\": $gpu_power"
-    payload+=",\"gpu_${gpu}_gpu_utilization\": $gpu_utilization"
-    payload+=",\"gpu_${gpu}_memory_utilization\": $memory_utilization"
-    payload+=",\"gpu_${gpu}_temperature\": $temperature"
-    payload+=",\"gpu_${gpu}_gpu_clock_mhz\": $gpu_clock_mhz"
-    payload+=",\"gpu_${gpu}_memory_clock_mhz\": $memory_clock_mhz"
-
     # Get process information for this GPU
     processes=$(nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits -i $gpu)
 
     # Calculate total memory usage by all processes
-    total_mem_usage=$(echo "$processes" | awk -F',' '{sum += $2} END {print sum}')
+    total_mem_usage=$(echo "$processes" | awk -F',' '{sum += $2} END {print sum+0}')  # Ensure sum is numeric
 
     # Process JSON array
-    process_json="\"gpu_${gpu}_processes\": ["
-    
+    process_json="\"processes\":["
+
     # Parse processes and estimate power usage based on memory usage
     while IFS=',' read -r pid mem_usage; do
+        if [[ -z "$pid" || -z "$mem_usage" ]]; then
+            continue  # Skip empty lines
+        fi
+
         # Compute estimated power usage per process
         if [ "$total_mem_usage" -gt 0 ] && [ "$mem_usage" -gt 0 ]; then
             power_usage=$(awk "BEGIN {printf \"%.2f\", ($mem_usage / $total_mem_usage) * $gpu_power}")
@@ -58,16 +54,17 @@ for ((gpu=0; gpu<num_gpus; gpu++)); do
         process_json+="{\"pid\": \"$pid\", \"memory_usage_mb\": $mem_usage, \"estimated_power_watts\": $power_usage},"
     done <<< "$processes"
 
-    # Remove trailing comma if any process was added
+    # Remove trailing comma if processes exist
     process_json=${process_json%,}
     process_json+="]"
 
-    # Append process data to GPU section
-    payload+=", $process_json"
+    # Append GPU data
+    payload+="{\"gpu_id\": $gpu, \"power_usage_watts\": $gpu_power, \"gpu_utilization\": $gpu_utilization, \"memory_utilization\": $memory_utilization, \"temperature\": $temperature, \"gpu_clock_mhz\": $gpu_clock_mhz, \"memory_clock_mhz\": $memory_clock_mhz, $process_json},"
 done
 
-# Close the JSON payload
-payload+="}"
+# Remove last comma from GPU array and close JSON
+payload=${payload%,}
+payload+="]}"
 
 # Send data to ThingsBoard using HTTP API (via curl)
 http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$THINGSBOARD_HOST/api/v1/$ACCESS_TOKEN/telemetry" \
