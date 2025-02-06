@@ -9934,7 +9934,7 @@
               "donutStartAngle" : 90,
               "showMinMax" : true,
               "minValue" : 0,
-              "maxValue" : 100,
+              "maxValue" : 50,
               "minMaxFont" : {
                 "family" : "Roboto",
                 "size" : 12,
@@ -9990,16 +9990,22 @@
                       "type" : "constant",
                       "value" : 0
                     },
-                    "color" : "rgb(54, 255, 0)"
+                    "color" : "rgb(0, 41, 255)"
                   }, {
                     "source" : {
                       "type" : "constant",
-                      "value" : 100
+                      "value" : 20
+                    },
+                    "color" : "rgba(0, 222, 52, 0.87)"
+                  }, {
+                    "source" : {
+                      "type" : "constant",
+                      "value" : 50
                     },
                     "color" : "rgba(255, 0, 0, 1)"
                   } ],
                   "minValue" : 0,
-                  "maxValue" : 100
+                  "maxValue" : 50
                 },
                 "rangeList" : {
                   "advancedMode" : false,
@@ -11229,7 +11235,14 @@
     },
     "name" : "Switch",
     "resources" : null,
-    "assignedCustomers" : null,
+    "assignedCustomers" : [ {
+      "customerId" : {
+        "entityType" : "CUSTOMER",
+        "id" : "6fe6fbd0-e475-11ef-98e7-cf3ec79a0143"
+      },
+      "title" : "Cloud Platforms Project",
+      "public" : false
+    } ],
     "externalId" : null,
     "id" : {
       "entityType" : "DASHBOARD",
