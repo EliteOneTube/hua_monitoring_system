@@ -9996,7 +9996,7 @@
                       "type" : "constant",
                       "value" : 20
                     },
-                    "color" : "rgba(0, 222, 52, 0.87)"
+                    "color" : "rgba(54, 255, 52, 0.87)"
                   }, {
                     "source" : {
                       "type" : "constant",
