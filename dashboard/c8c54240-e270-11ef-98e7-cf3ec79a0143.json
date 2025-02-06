@@ -55,10 +55,10 @@
               "dataZoom" : true,
               "rangeColors" : [ {
                 "from" : null,
-                "to" : 400,
+                "to" : 350,
                 "color" : "#3DA71A"
               }, {
-                "from" : 400,
+                "from" : 350,
                 "to" : 700,
                 "color" : "#F36900"
               }, {
