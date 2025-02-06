@@ -59,16 +59,17 @@
                 "color" : "#3DA71A"
               }, {
                 "from" : 400,
-                "to" : 550,
+                "to" : 700,
                 "color" : "#F36900"
               }, {
-                "from" : 550,
+                "from" : 700,
                 "to" : null,
                 "color" : "#D81838"
               } ],
               "outOfRangeColor" : "#ccc",
               "showRangeThresholds" : true,
               "rangeThreshold" : {
+                "type" : "constant",
                 "yAxisId" : "default",
                 "units" : "W",
                 "decimals" : 0,
