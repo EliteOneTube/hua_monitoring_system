@@ -1,7 +1,7 @@
 {
   "entityType" : "DASHBOARD",
   "entity" : {
-    "title" : "HCP Cluster",
+    "title" : "HCP Cluster OFFLINE",
     "image" : "tb-image;https://bizon-tech.com/i/cluster/rack-2.jpg",
     "mobileHide" : false,
     "mobileOrder" : null,
@@ -5146,7 +5146,7 @@
         "toolbarAlwaysOpen" : true
       }
     },
-    "name" : "HCP Cluster",
+    "name" : "HCP Cluster OFFLINE",
     "resources" : null,
     "assignedCustomers" : null,
     "externalId" : null,
