@@ -3816,7 +3816,7 @@
             "showTitleIcon" : false,
             "titleIcon" : "thermostat",
             "iconColor" : "#1F6BDD",
-            "useDashboardTimewindow" : false,
+            "useDashboardTimewindow" : true,
             "displayTimewindow" : true,
             "titleFont" : {
               "size" : 16,
@@ -6820,7 +6820,7 @@
             "showTitleIcon" : false,
             "titleIcon" : "thermostat",
             "iconColor" : "#1F6BDD",
-            "useDashboardTimewindow" : false,
+            "useDashboardTimewindow" : true,
             "displayTimewindow" : true,
             "titleFont" : {
               "size" : 16,
@@ -11184,7 +11184,7 @@
         "realtime" : {
           "realtimeType" : 0,
           "interval" : 60000,
-          "timewindowMs" : 18000000,
+          "timewindowMs" : 3600000,
           "quickInterval" : "CURRENT_DAY",
           "hideInterval" : false,
           "hideLastInterval" : false,
