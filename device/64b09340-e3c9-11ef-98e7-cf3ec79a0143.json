@@ -28,7 +28,7 @@
       "entityType" : "DEVICE",
       "id" : "64b09340-e3c9-11ef-98e7-cf3ec79a0143"
     },
-    "label" : "",
+    "label" : "HUA NOC Network UPS",
     "name" : "str-5000-central",
     "softwareId" : null,
     "type" : "Schneider UPS"
@@ -61,8 +61,8 @@
       "doubleValue" : null,
       "jsonValue" : null,
       "key" : "lastActivityTime",
-      "lastUpdateTs" : 1738830797162,
-      "longValue" : 1738830796372,
+      "lastUpdateTs" : 1738864247145,
+      "longValue" : 1738864244744,
       "strValue" : null
     } ],
     "SHARED_SCOPE" : [ ]
