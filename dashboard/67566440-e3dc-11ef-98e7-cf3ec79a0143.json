@@ -383,7 +383,7 @@
                 "color" : "#2196f3",
                 "gradient" : {
                   "advancedMode" : false,
-                  "gradient" : [ "rgb(255, 0, 0)", "rgb(0, 255, 0)" ],
+                  "gradient" : [ "rgb(255, 0, 0)", "rgb(139, 195, 74)" ],
                   "gradientAdvanced" : [ {
                     "source" : {
                       "type" : "constant",
@@ -415,7 +415,7 @@
               "animationDuration" : 500,
               "animationRule" : "linear",
               "useFixedLevelColor" : false,
-              "levelColors" : [ "rgb(255, 0, 0)", "rgb(0, 255, 0)" ]
+              "levelColors" : [ "rgb(255, 0, 0)", "rgb(139, 195, 74)" ]
             },
             "title" : "Gauge",
             "dropShadow" : true,
@@ -1174,7 +1174,7 @@
                     "color" : "rgba(0, 0, 0, 0.87)",
                     "gradient" : {
                       "advancedMode" : false,
-                      "gradient" : [ "rgb(255, 0, 0)", "rgb(0, 255, 0)" ],
+                      "gradient" : [ "rgb(255, 0, 0)", "rgb(139, 195, 74)" ],
                       "gradientAdvanced" : [ {
                         "source" : {
                           "type" : "constant"
@@ -1271,7 +1271,7 @@
               "fontWeight" : 400
             },
             "mobileHeight" : null,
-            "configMode" : "advanced",
+            "configMode" : "basic",
             "actions" : { },
             "showTitleIcon" : true,
             "titleIcon" : "schedule",
@@ -1374,37 +1374,11 @@
             "color" : "rgba(0, 0, 0, 0.87)",
             "padding" : "0px",
             "settings" : {
-              "maxValue" : 100,
-              "minValue" : 0,
+              "gaugeType" : "donut",
               "donutStartAngle" : 90,
-              "showValue" : true,
               "showMinMax" : true,
-              "gaugeWidthScale" : 0.75,
-              "levelColors" : [ "rgba(0, 255, 0, 1)", "rgba(255, 0, 0, 1)" ],
-              "refreshAnimationType" : ">",
-              "refreshAnimationTime" : 700,
-              "startAnimationType" : ">",
-              "startAnimationTime" : 700,
-              "titleFont" : {
-                "family" : "Roboto",
-                "size" : 12,
-                "style" : "normal",
-                "weight" : "500",
-                "color" : null
-              },
-              "labelFont" : {
-                "family" : "Roboto",
-                "size" : 8,
-                "style" : "normal",
-                "weight" : "500"
-              },
-              "valueFont" : {
-                "family" : "Roboto",
-                "style" : "normal",
-                "weight" : "500",
-                "size" : 32,
-                "color" : "#000000"
-              },
+              "minValue" : 0,
+              "maxValue" : 100,
               "minMaxFont" : {
                 "family" : "Segment7Standard",
                 "size" : 12,
@@ -1412,19 +1386,49 @@
                 "weight" : "500",
                 "color" : null
               },
-              "neonGlowBrightness" : 0,
-              "dashThickness" : 0,
-              "decimals" : 0,
-              "gaugeColor" : "#eeeeee",
-              "gaugeType" : "donut",
+              "minMaxColor" : null,
+              "showValue" : true,
+              "valueFont" : {
+                "family" : "Roboto",
+                "size" : 32,
+                "style" : "normal",
+                "weight" : "500",
+                "color" : "#000000"
+              },
+              "valueColor" : "#000000",
               "showTitle" : null,
               "title" : null,
+              "titleFont" : {
+                "family" : "Roboto",
+                "size" : 12,
+                "style" : "normal",
+                "weight" : "500",
+                "color" : null
+              },
+              "titleColor" : null,
+              "showUnitTitle" : false,
+              "unitTitle" : null,
+              "showTimestamp" : false,
+              "timestampFormat" : "yyyy-MM-dd HH:mm:ss",
+              "labelFont" : {
+                "family" : "Roboto",
+                "size" : 8,
+                "style" : "normal",
+                "weight" : "500",
+                "color" : null
+              },
+              "labelColor" : null,
+              "gaugeWidthScale" : 0.75,
+              "neonGlowBrightness" : 0,
+              "dashThickness" : 0,
+              "roundedLineCap" : false,
+              "gaugeColor" : "#eeeeee",
               "barColor" : {
                 "type" : "gradient",
                 "color" : "#2196f3",
                 "gradient" : {
                   "advancedMode" : false,
-                  "gradient" : [ "rgba(0, 255, 0, 1)", "rgba(255, 0, 0, 1)" ],
+                  "gradient" : [ "rgb(139, 195, 74)", "rgba(255, 0, 0, 1)" ],
                   "gradientAdvanced" : [ {
                     "source" : {
                       "type" : "constant"
@@ -1446,7 +1450,15 @@
                 },
                 "colorFunction" : "var temperature = value;\nif (typeof temperature !== undefined) {\n  var percent = (temperature + 60)/120 * 100;\n  return tinycolor.mix('blue', 'red', percent).toHexString();\n}\nreturn 'blue';"
               },
-              "useFixedLevelColor" : false
+              "showTicks" : false,
+              "tickWidth" : 4,
+              "colorTicks" : "#666",
+              "ticksValue" : [ ],
+              "animation" : true,
+              "animationDuration" : 500,
+              "animationRule" : "linear",
+              "useFixedLevelColor" : false,
+              "levelColors" : [ "rgb(139, 195, 74)", "rgba(255, 0, 0, 1)" ]
             },
             "title" : "Load",
             "dropShadow" : true,
@@ -1770,7 +1782,7 @@
                 "color" : "rgba(0, 0, 0, 0.87)",
                 "gradient" : {
                   "advancedMode" : false,
-                  "gradient" : [ "rgb(0, 255, 0)", "rgba(255, 0, 0, 1)" ],
+                  "gradient" : [ "rgb(139, 195, 74)", "rgba(255, 0, 0, 1)" ],
                   "gradientAdvanced" : [ {
                     "source" : {
                       "type" : "constant"
@@ -1924,7 +1936,7 @@
               "rangeColors" : [ {
                 "from" : null,
                 "to" : 45,
-                "color" : "rgb(0, 255, 0)"
+                "color" : "rgb(139, 195, 74)"
               }, {
                 "from" : 45,
                 "to" : 80,
@@ -1993,6 +2005,8 @@
                 "borderColor" : "#ccc"
               },
               "yAxis" : {
+                "units" : null,
+                "decimals" : 0,
                 "show" : true,
                 "label" : "",
                 "labelFont" : {
@@ -2015,15 +2029,15 @@
                   "lineHeight" : "1"
                 },
                 "tickLabelColor" : "rgba(0, 0, 0, 0.54)",
+                "ticksFormatter" : null,
                 "showTicks" : true,
                 "ticksColor" : "rgba(0, 0, 0, 0.54)",
                 "showLine" : true,
                 "lineColor" : "rgba(0, 0, 0, 0.54)",
                 "showSplitLines" : false,
                 "splitLinesColor" : "rgba(0, 0, 0, 0.12)",
-                "units" : null,
-                "decimals" : 0,
-                "ticksFormatter" : null,
+                "id" : "default",
+                "order" : 0,
                 "ticksGenerator" : null,
                 "interval" : null,
                 "splitNumber" : null,
