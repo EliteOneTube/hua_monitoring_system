@@ -11301,17 +11301,17 @@
                   "col" : 20
                 },
                 "0f84bd3d-6228-df62-4975-762ed75a9513" : {
-                  "sizeX" : 30,
+                  "sizeX" : 14,
                   "sizeY" : 10,
                   "mobileHeight" : null,
                   "row" : 23,
                   "col" : 0
                 },
                 "f10e32c4-8afc-f962-8f7a-eb7997793014" : {
-                  "sizeX" : 14,
-                  "sizeY" : 6,
-                  "row" : 33,
-                  "col" : 0
+                  "sizeX" : 16,
+                  "sizeY" : 11,
+                  "row" : 23,
+                  "col" : 14
                 }
               },
               "gridSettings" : {
