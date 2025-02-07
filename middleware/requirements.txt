@@ -1,5 +1,0 @@
-pysnmplib
-pysnmp
-snmpclitools
-requests
-python-dotenv
