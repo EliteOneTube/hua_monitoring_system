@@ -1502,7 +1502,10 @@
                 "_hash" : 0.6584831990515732
               } ],
               "alarmFilterConfig" : {
-                "statusList" : [ "ACTIVE" ]
+                "statusList" : [ "ACTIVE" ],
+                "typeList" : [ "Battery Status" ],
+                "assignedToCurrentUser" : false,
+                "assigneeId" : null
               }
             } ],
             "timewindow" : {
@@ -1602,7 +1605,8 @@
               "chevronSize" : 24,
               "chevronSizeUnit" : "px",
               "chevronColor" : "rgba(0, 0, 0, 0.38)",
-              "layout" : "column"
+              "layout" : "column",
+              "autoScale" : true
             },
             "title" : "Alarm count",
             "dropShadow" : true,
