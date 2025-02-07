@@ -1,7 +1,7 @@
 {
   "entityType" : "DASHBOARD",
   "entity" : {
-    "title" : "XComputer Vision Group Mashines",
+    "title" : "Computer Vision Group Mashines",
     "image" : null,
     "mobileHide" : false,
     "mobileOrder" : null,
@@ -1099,7 +1099,7 @@
         "toolbarAlwaysOpen" : true
       }
     },
-    "name" : "XComputer Vision Group Mashines",
+    "name" : "Computer Vision Group Mashines",
     "resources" : null,
     "assignedCustomers" : [ {
       "customerId" : {
